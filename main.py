@@ -12,6 +12,34 @@ def remove_zero_amount_rows(csv_file):
     df.to_csv(csv_file, index=False)
 
 
+def remove_duplicates():
+    # Read in the CSV file as a pandas dataframe
+    file = "data/stored_data.csv"
+    df = pd.read_csv(file)
+
+    # Identify duplicates based on storage container and EAN values
+    duplicates = df[df.duplicated(subset=['Storage', 'EAN'], keep=False)]
+
+    # For each set of duplicates, combine them into a single row and remove the other row
+    for _, group in duplicates.groupby(['Storage', 'EAN']):
+        if len(group) > 1:
+            # print()
+            storage = group["Storage"].values.tolist()[0]
+            ean = group["EAN"].values.tolist()[0]
+            a = 0
+            for i in group["Amount"].values:
+                int(i)
+                a += i
+            if a > 0 and storage and ean:
+                df = df.drop_duplicates(duplicates, keep=False)
+                new_line = {"Storage": storage, "EAN": ean, "Amount": a}
+                new_df = pd.DataFrame([new_line])
+                df = pd.concat([df, new_df], ignore_index=True)
+                df.to_csv(file, index=False)
+            else:
+                print("Something went wrong while Cleaning up!")
+
+
 def isvalid(a):
     vs = pd.read_csv("data/valid_storage.csv")
     if a in vs["Storage"].values:
@@ -27,7 +55,7 @@ def readEAN(a):
     sd = pd.read_csv("data/stored_data.csv")
     if a in sd["EAN"].astype(int).values:
         print(f"EAN {a} Found!")
-        print(sd.values)
+        print(sd[sd["EAN"] == a].values)
         return True
     else:
         print(f"{a} not Found!")
@@ -103,5 +131,5 @@ def relocateEAN(Storagefrom, EAN, Amount, Storageto):
         print(f"Couldn't find {Storagefrom}")
 
 
-relocateEAN("FB-2", 10001, 2, "FB-1")
 remove_zero_amount_rows("data/stored_data.csv")
+remove_duplicates()
