@@ -1,10 +1,21 @@
 import pandas as pd
 
 
+def remove_zero_amount_rows(csv_file):
+    # Read the CSV file into a DataFrame
+    df = pd.read_csv(csv_file)
+
+    # Remove rows where the "Amount" column is zero
+    df = df[df["Amount"] != 0]
+
+    # Save the updated data back to the same CSV file
+    df.to_csv(csv_file, index=False)
+
+
 def isvalid(a):
     vs = pd.read_csv("data/valid_storage.csv")
     if a in vs["Storage"].values:
-        print("Found Storage!")
+        print(f"Found {a}!")
         return True
     else:
         print(f"No Storage named {a} Found!")
@@ -67,7 +78,30 @@ def STOREEAN(Storage, EAN, Amount):
         return False
 
 
-def relocateEAN(Storagefrom, EAN, Storagetoo):
+def relocateEAN(Storagefrom, EAN, Amount, Storageto):
     Storagefrom = str(Storagefrom)
-    Storagetoo = str(Storagetoo)
+    Storageto = str(Storageto)
     EAN = int(EAN)
+    Amount = int(Amount)
+    sd = pd.read_csv("data/stored_data.csv")
+    if isvalid(Storagefrom) and isvalid(Storageto):
+        mask = (sd["Storage"] == Storagefrom) & (sd["EAN"] == EAN) & (sd["Amount"] >= Amount)
+        if not sd.loc[mask].empty:
+            print("Found Storage ready for Relocation!")
+            sd.loc[mask, "Amount"] -= Amount
+            new_row = {"Storage": Storageto, "EAN": EAN, "Amount": Amount}
+            new_sd = pd.DataFrame([new_row])
+            sd = pd.concat([sd, new_sd], ignore_index=True)
+            sd.to_csv("data/stored_data.csv", index=False)
+            return True
+        else:
+            print("Something went wrong not ready for Relocation!")
+            return False
+    elif not isvalid(Storageto):
+        print(f"Couldn't find {Storageto}")
+    elif not isvalid(Storagefrom):
+        print(f"Couldn't find {Storagefrom}")
+
+
+relocateEAN("FB-2", 10001, 2, "FB-1")
+remove_zero_amount_rows("data/stored_data.csv")
