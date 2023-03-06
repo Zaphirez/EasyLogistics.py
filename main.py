@@ -23,18 +23,25 @@ def remove_duplicates():
     # For each set of duplicates, combine them into a single row and remove the other row
     for _, group in duplicates.groupby(['Storage', 'EAN']):
         if len(group) > 1:
-            # print()
+            # print(group)
             storage = group["Storage"].values.tolist()[0]
+            # print(storage)
             ean = group["EAN"].values.tolist()[0]
+            # print(ean)
             a = 0
             for i in group["Amount"].values:
                 int(i)
                 a += i
             if a > 0 and storage and ean:
-                df = df.drop_duplicates(duplicates, keep=False)
+                df = df.drop_duplicates(subset=["Storage", "EAN"], keep=False)
+                # print(f"this is after dropping: {df}")
                 new_line = {"Storage": storage, "EAN": ean, "Amount": a}
+                # print(f"this is the new line: {new_line}")
                 new_df = pd.DataFrame([new_line])
+                # print(f"this is the new df: {new_df}")
                 df = pd.concat([df, new_df], ignore_index=True)
+                # print(f"after concat {df}")
+
                 df.to_csv(file, index=False)
             else:
                 print("Something went wrong while Cleaning up!")
